@@ -1,0 +1,64 @@
+---
+# tasks file for blogmap
+
+- k8s:
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: '{{ meta.name }}-web'
+        namespace: '{{ meta.namespace }}'
+      spec:
+        progressDeadlineSeconds: 600
+        replicas: '{{ size }}'
+        revisionHistoryLimit: 10
+        selector:
+          matchLabels:
+            app.kubernetes.io/instance: '{{ meta.name }}-web'
+            app.kubernetes.io/name: '{{ meta.name }}-web'
+        strategy:
+          rollingUpdate:
+            maxSurge: 25%
+            maxUnavailable: 25%
+          type: RollingUpdate
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/instance: '{{ meta.name }}-web'
+              app.kubernetes.io/name: '{{ meta.name }}-web'
+          spec:
+            containers:
+              - image: quay.io/jritter/blogmap:latest
+                imagePullPolicy: IfNotPresent
+                livenessProbe:
+                  failureThreshold: 3
+                  httpGet:
+                    path: /
+                    port: http
+                    scheme: HTTP
+                  periodSeconds: 10
+                  successThreshold: 1
+                  timeoutSeconds: 1
+                name: '{{ meta.name }}-web'
+                ports:
+                  - containerPort: 8080
+                    name: http
+                    protocol: TCP
+                readinessProbe:
+                  failureThreshold: 3
+                  httpGet:
+                    path: /
+                    port: http
+                    scheme: HTTP
+                  periodSeconds: 10
+                  successThreshold: 1
+                  timeoutSeconds: 1
+                resources: {}
+                securityContext: {}
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+            dnsPolicy: ClusterFirst
+            restartPolicy: Always
+            schedulerName: default-scheduler
+            securityContext: {}
+            terminationGracePeriodSeconds: 30

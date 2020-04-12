@@ -1,0 +1,40 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blogmap-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: blogmap-operator
+  template:
+    metadata:
+      labels:
+        name: blogmap-operator
+    spec:
+      serviceAccountName: blogmap-operator
+      containers:
+        - name: blogmap
+          # Replace this with the built image name
+          image: 'quay.io/jritter/blogmap-operator:v0.0.1'
+          imagePullPolicy: 'Always'
+          volumeMounts:
+            - mountPath: /tmp/ansible-operator/runner
+              name: runner
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: 'blogmap'
+            - name: ANSIBLE_GATHERING
+              value: explicit
+      volumes:
+        - name: runner
+          emptyDir: {}
